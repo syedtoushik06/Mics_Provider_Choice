@@ -1,5 +1,5 @@
 * ==============================================================================
-* BANGLADESH MICS6: ANTIBIOTIC SOURCE CHANNEL ANALYSIS
+* BANGLADESH MICS6: ANTIBIOTIC SOURCE CHANNEL ANALYSIS - RURAL ONLY
 * ==============================================================================
 
 clear all
@@ -13,7 +13,7 @@ version 16.0
 * ==============================================================================
 
 local raw_data_path  "C:/Users/HP/Desktop/MICS/Bangladesh MICS6 SPSS Datasets/"
-local output_path    "C:/Users/HP/Desktop/MICS/Output/"
+local output_path    "C:/Users/HP/Desktop/MICS/Output/Rural/"
 
 cap mkdir "`output_path'"
 
@@ -53,7 +53,16 @@ merge m:1 hh1 hh2 using "`hh_temp'", keep(master match) nogen
 
 
 * ==============================================================================
-* SECTION 2: DEFINE SICK-CHILD SAMPLE
+* SECTION 2: FILTER FOR RURAL ONLY
+* ==============================================================================
+
+* Keep only rural households (hh6 == 2)
+keep if hh6 == 2
+di "Rural households retained: N = " _N
+
+
+* ==============================================================================
+* SECTION 3: DEFINE SICK-CHILD SAMPLE
 * ==============================================================================
 
 gen byte child_had_ari = (ca17 == 1 | inlist(ca18, 1, 3)) if !missing(ca17, ca18)
@@ -73,11 +82,11 @@ label variable child_was_sick "Child was sick in the last 2 weeks"
 label values child_was_sick lbl_yesno
 
 keep if child_was_sick == 1
-di "Sick children retained: N = " _N
+di "Sick children retained (Rural): N = " _N
 
 
 * ==============================================================================
-* SECTION 3: CARE-SEEKING
+* SECTION 4: CARE-SEEKING
 * ==============================================================================
 
 gen byte care_was_sought = 0
@@ -88,7 +97,7 @@ label values care_was_sought lbl_yesno
 
 
 * ==============================================================================
-* SECTION 4: ANTIBIOTIC USE
+* SECTION 5: ANTIBIOTIC USE
 * ==============================================================================
 
 gen byte ab_given_diarrhea = .
@@ -116,7 +125,7 @@ replace care_was_sought = 1 if child_received_ab == 1
 
 
 * ==============================================================================
-* SECTION 5: CLASSIFY ANTIBIOTIC SOURCE CHANNEL
+* SECTION 6: CLASSIFY ANTIBIOTIC SOURCE CHANNEL
 * ==============================================================================
 
 gen byte channel_code = .
@@ -152,7 +161,7 @@ replace channel_code = 2 if child_received_ab == 1 & missing(channel_code)
 
 
 * ==============================================================================
-* SECTION 6: OUTCOME VARIABLES
+* SECTION 7: OUTCOME VARIABLES
 * ==============================================================================
 
 gen byte informal_source = 0 if child_received_ab == 1
@@ -170,11 +179,11 @@ label values ab_source_3cat lbl_ab_source3
 
 
 * ==============================================================================
-* SECTION 7: INDEPENDENT (PREDICTOR) VARIABLES
+* SECTION 8: INDEPENDENT (PREDICTOR) VARIABLES
 * ==============================================================================
 
 * ------------------------------------------------------------------------------
-* 7a. CHILD FACTORS
+* 8a. CHILD FACTORS
 * ------------------------------------------------------------------------------
 
 gen byte child_is_male = (hl4 == 1) if !missing(hl4)
@@ -224,7 +233,7 @@ label variable child_had_multiple_illnesses "Child had two or more illnesses"
 label values child_had_multiple_illnesses lbl_yesno
 
 * ------------------------------------------------------------------------------
-* 7b. CAREGIVER/MOTHER FACTORS
+* 8b. CAREGIVER/MOTHER FACTORS
 * ------------------------------------------------------------------------------
 
 * Mother's age at child's birth
@@ -268,7 +277,7 @@ label variable delivered_at_facility "Born at health facility"
 label values delivered_at_facility lbl_yesno
 
 * ------------------------------------------------------------------------------
-* 7c. FATHER/HUSBAND FACTORS (from WM data)
+* 8c. FATHER/HUSBAND FACTORS (from WM data)
 * ------------------------------------------------------------------------------
 
 * Husband's age (from women's dataset)
@@ -294,7 +303,7 @@ else {
 }
 
 * ------------------------------------------------------------------------------
-* 7d. HOUSEHOLD CHARACTERISTICS
+* 8d. HOUSEHOLD CHARACTERISTICS
 * ------------------------------------------------------------------------------
 
 gen byte hh_wealth_quintile = windex5 if !missing(windex5)
@@ -329,7 +338,7 @@ label define lbl_crowding 1 "Low (<3 persons/room)" 2 "Medium (3-4 persons/room)
 label values crowding_category lbl_crowding
 
 * ------------------------------------------------------------------------------
-* 7e. ENVIRONMENTAL FACTORS
+* 8e. ENVIRONMENTAL FACTORS
 * ------------------------------------------------------------------------------
 
 gen byte uses_clean_fuel = inlist(eu1, 1, 2, 4) if !missing(eu1)
@@ -349,7 +358,7 @@ label variable has_electricity "Has electricity"
 label values has_electricity lbl_yesno
 
 * ------------------------------------------------------------------------------
-* 7f. INFORMATION/MEDIA ACCESS
+* 8f. INFORMATION/MEDIA ACCESS
 * ------------------------------------------------------------------------------
 
 gen byte has_media_access = 0
@@ -362,7 +371,7 @@ label variable owns_mobile_phone "Owns mobile phone"
 label values owns_mobile_phone lbl_yesno
 
 * ------------------------------------------------------------------------------
-* 7g. TREATMENT FACTORS
+* 8g. TREATMENT FACTORS
 * ------------------------------------------------------------------------------
 
 gen byte received_ors_zinc = 0
@@ -373,7 +382,7 @@ label values received_ors_zinc lbl_yesno
 
 
 * ==============================================================================
-* SECTION 8: SURVEY DESIGN SETUP
+* SECTION 9: SURVEY DESIGN SETUP
 * ==============================================================================
 
 * Create stratum if missing
@@ -385,16 +394,12 @@ if _rc {
 * Set survey design
 svyset psu [pw = chweight], strata(stratum) singleunit(centered) vce(linearized)
 
-di "Survey design summary:"
+di "Survey design summary (Rural):"
 svydes
 
 
 * ==============================================================================
-* SECTION 9: SAVE ANALYSIS DATASET
-* ==============================================================================
-
-* ==============================================================================
-* SECTION 9: SAVE ANALYSIS DATASET - KEEP ALL VARIABLES
+* SECTION 10: SAVE ANALYSIS DATASET - RURAL
 * ==============================================================================
 
 * Keep ALL variables that exist
@@ -416,22 +421,21 @@ keep hh1 hh2 chweight psu stratum ///
      received_ors_zinc
 
 * Save the dataset
-save "`output_path'MICS6_Antibiotic_Analysis.dta", replace
-export delimited using "`output_path'MICS6_Antibiotic_Analysis.csv", replace
+save "`output_path'MICS6_Antibiotic_Analysis_Rural.dta", replace
+export delimited using "`output_path'MICS6_Antibiotic_Analysis_Rural.csv", replace
 
-di "Analysis dataset saved with " _N " observations"
-
+di "Rural analysis dataset saved with " _N " observations"
 
 
 * ==============================================================================
-* SECTION 10: DESCRIPTIVE ANALYSIS
+* SECTION 11: DESCRIPTIVE ANALYSIS - RURAL
 * ==============================================================================
 
 di _n "============================================================"
-di "DESCRIPTIVE RESULTS"
+di "DESCRIPTIVE RESULTS - RURAL"
 di "============================================================"
 
-di _n "Total sick children: " _N
+di _n "Total sick children (Rural): " _N
 
 qui count if care_was_sought == 1
 di "Care sought: " r(N) " (" %3.1f (r(N)/_N)*100 "%)"
@@ -439,23 +443,23 @@ di "Care sought: " r(N) " (" %3.1f (r(N)/_N)*100 "%)"
 qui count if child_received_ab == 1
 di "Antibiotics received: " r(N) " (" %3.1f (r(N)/_N)*100 "%)"
 
-di _n "Among antibiotic users:"
+di _n "Among antibiotic users (Rural):"
 tab informal_source if child_received_ab == 1
 
-di _n "Predictor distributions (antibiotic users):"
-foreach var in child_is_male child_age_group mother_edu_level hh_wealth_quintile hh_is_urban {
+di _n "Predictor distributions (antibiotic users - Rural):"
+foreach var in child_is_male child_age_group mother_edu_level hh_wealth_quintile {
     di _n "Tabulation of `var':"
     tab `var' if child_received_ab == 1, missing
 }
 
 
 * ==============================================================================
-* SECTION 11: BINARY LOGISTIC REGRESSION - COMPLETE
+* SECTION 12: BINARY LOGISTIC REGRESSION - RURAL
 * Outcome: informal_source (1=Informal, 0=Formal)
 * ==============================================================================
 
 di _n "============================================================"
-di "BINARY LOGISTIC REGRESSION"
+di "BINARY LOGISTIC REGRESSION - RURAL"
 di "Outcome: Informal vs Formal antibiotic source"
 di "============================================================"
 
@@ -464,16 +468,16 @@ preserve
 * Keep only antibiotic users
 keep if child_received_ab == 1
 local n_ab_users = _N
-di "Antibiotic users (analytic sample): " `n_ab_users'
+di "Antibiotic users (Rural analytic sample): " `n_ab_users'
 di ""
 
 if `n_ab_users' >= 30 {
     
     * ==========================================================================
-    * MODEL 1: UNADJUSTED (CRUDE) ODDS RATIOS FOR ALL VARIABLES
+    * MODEL 1: UNADJUSTED (CRUDE) ODDS RATIOS - RURAL
     * ==========================================================================
     di _n "================================================================================"
-    di "MODEL 1: UNADJUSTED (CRUDE) ODDS RATIOS"
+    di "MODEL 1: UNADJUSTED (CRUDE) ODDS RATIOS - RURAL"
     di "================================================================================"
     
     * Wealth Quintile
@@ -491,10 +495,6 @@ if `n_ab_users' >= 30 {
     * Child Sex
     di _n "Child Sex (Ref: Female):"
     svy: logit informal_source i.child_is_male, or
-    
-    * Urban Residence
-    di _n "Urban Area (Ref: Rural):"
-    svy: logit informal_source i.hh_is_urban, or
     
     * Child had Diarrhea
     di _n "Child had Diarrhea (Ref: No):"
@@ -574,91 +574,91 @@ if `n_ab_users' >= 30 {
     
     
     * ==========================================================================
-    * MODEL 2: ADJUSTED (MULTIVARIABLE) ODDS RATIOS
+    * MODEL 2: ADJUSTED (MULTIVARIABLE) ODDS RATIOS - RURAL
     * ==========================================================================
     di _n ""
     di _n "================================================================================"
-    di "MODEL 2: ADJUSTED (MULTIVARIABLE) ODDS RATIOS"
+    di "MODEL 2: ADJUSTED (MULTIVARIABLE) ODDS RATIOS - RURAL"
     di "================================================================================"
 
     * Model 2a: Demographic variables only
-    di _n "Model 2a: Adjusted for Wealth, Mother's Education, Child Age, Sex, Residence"
-    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.hh_is_urban
+    di _n "Model 2a: Adjusted for Wealth, Mother's Education, Child Age, Sex"
+    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male
     svy: logit, or
 
     * Model 2b: Add clinical variables (Diarrhea, Fever)
     di _n "Model 2b: + Diarrhea and Fever"
-    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.hh_is_urban i.child_had_diarrhea i.child_had_fever
+    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.child_had_diarrhea i.child_had_fever
     svy: logit, or
 
     * Model 2c: Add environmental factors (Electricity)
     di _n "Model 2c: + Electricity"
-    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.hh_is_urban i.child_had_diarrhea i.child_had_fever i.has_electricity
+    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.child_had_diarrhea i.child_had_fever i.has_electricity
     svy: logit, or
 
     * Model 2d: Add media access
-    di _n "Model 2d: + Media Access (FINAL ADJUSTED MODEL)"
-    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.hh_is_urban i.child_had_diarrhea i.child_had_fever i.has_electricity i.has_media_access
+    di _n "Model 2d: + Media Access (FINAL ADJUSTED MODEL - RURAL)"
+    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.child_had_diarrhea i.child_had_fever i.has_electricity i.has_media_access
     svy: logit, or
-	
-	* Model 2e: (FINAL MODEL)
-	svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.hh_is_urban i.child_had_diarrhea i.child_had_fever i.child_had_cough i.child_had_ari i.child_malnourished i.mother_was_teenager i.mother_can_read i.delivered_at_facility i.had_4plus_anc_visits i.hhhead_edu_level i.family_size_cat i.crowding_category i.uses_clean_fuel i.has_safe_water i.has_safe_toilet i.has_electricity i.has_media_access i.owns_mobile_phone
-svy: logit, or
-	
+    
+    * Model 2e: FULL MODEL
+    di _n "Model 2e: FULL MODEL - RURAL"
+    svy: logit informal_source i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.child_had_diarrhea i.child_had_fever i.child_had_cough i.child_had_ari i.child_malnourished i.mother_was_teenager i.mother_can_read i.delivered_at_facility i.had_4plus_anc_visits i.hhhead_edu_level i.family_size_cat i.crowding_category i.uses_clean_fuel i.has_safe_water i.has_safe_toilet i.has_electricity i.has_media_access i.owns_mobile_phone
+    svy: logit, or
 }
 
 
 restore
 
 * ==============================================================================
-* SECTION 12: MULTINOMIAL LOGISTIC REGRESSION
+* SECTION 13: MULTINOMIAL LOGISTIC REGRESSION - RURAL
 * Outcome: ab_source_3cat (0=No antibiotic, 1=Formal, 2=Informal)
 * ==============================================================================
 
 di _n ""
 di _n "============================================================"
-di "MULTINOMIAL LOGISTIC REGRESSION"
+di "MULTINOMIAL LOGISTIC REGRESSION - RURAL"
 di "Outcome: No antibiotic / Formal antibiotic / Informal antibiotic"
 di "============================================================"
 
 * Keep only treatment seekers
 keep if care_was_sought == 1
 local n_treatment = _N
-di "Treatment seekers: " `n_treatment'
+di "Treatment seekers (Rural): " `n_treatment'
 
 if `n_treatment' >= 50 {
     
     * Multinomial Model 1: Basic model
-    di _n "Multinomial Model 1: Basic model (Ref: No antibiotic)"
-    svy: mlogit ab_source_3cat i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.hh_is_urban, baseoutcome(0) rrr
+    di _n "Multinomial Model 1: Basic model (Ref: No antibiotic) - RURAL"
+    svy: mlogit ab_source_3cat i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male, baseoutcome(0) rrr
     
     * Multinomial Model 2: Add clinical variables
-    di _n "Multinomial Model 2: + Diarrhea and Fever (Ref: No antibiotic)"
-    svy: mlogit ab_source_3cat i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.hh_is_urban i.child_had_diarrhea i.child_had_fever, baseoutcome(0) rrr
+    di _n "Multinomial Model 2: + Diarrhea and Fever (Ref: No antibiotic) - RURAL"
+    svy: mlogit ab_source_3cat i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.child_had_diarrhea i.child_had_fever, baseoutcome(0) rrr
     
-    * Multinomial Model 3: Full model (Ref: No antibiotic)
-    di _n "Multinomial Model 3: Full model (Ref: No antibiotic)"
-    svy: mlogit ab_source_3cat i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.hh_is_urban i.child_had_diarrhea i.child_had_fever i.has_electricity i.has_media_access, baseoutcome(0) rrr
+    * Multinomial Model 3: Full model
+    di _n "Multinomial Model 3: Full model (Ref: No antibiotic) - RURAL"
+    svy: mlogit ab_source_3cat i.hh_wealth_quintile i.mother_edu_level i.child_age_group i.child_is_male i.child_had_diarrhea i.child_had_fever i.has_electricity i.has_media_access, baseoutcome(0) rrr
 }
 
 restore
 
 di _n ""
 di "============================================================"
-di "ANALYSIS COMPLETE"
+di "RURAL ANALYSIS COMPLETE"
 di "============================================================"
 
 * ==============================================================================
-* SECTION 13: COMPLETION SUMMARY
+* SECTION 14: COMPLETION SUMMARY - RURAL
 * ==============================================================================
 
 di _n "============================================================"
-di "ANALYSIS COMPLETE"
+di "RURAL ANALYSIS COMPLETE"
 di "============================================================"
 di "Output saved to: `output_path'"
-di "Files: MICS6_Antibiotic_Analysis.dta and .csv"
+di "Files: MICS6_Antibiotic_Analysis_Rural.dta and .csv"
 di ""
-di "SAMPLE SUMMARY:"
+di "RURAL SAMPLE SUMMARY:"
 di "  Total sick children:            " _N
 qui count if care_was_sought == 1
 di "  Care sought:                    " r(N)
@@ -671,5 +671,5 @@ di "  Informal source users:          " r(N)
 di "============================================================"
 
 * ==============================================================================
-* END OF DO-FILE
+* END OF RURAL DO-FILE
 * ==============================================================================
