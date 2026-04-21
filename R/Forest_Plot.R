@@ -1,47 +1,16 @@
 library(ggplot2)
 library(dplyr)
 
-# Count each item explicitly:
-# Wealth: Poor, Middle, Upper-middle, Richest = 4
-# Mother Ed: Primary, Secondary, Higher = 3  
-# Child Age: 6-11, 12-23, 24-35, 36-47, 48-59 = 5 (NOT 6!)
-# Wait - child age has 5 categories, not 6! Let me check your table...
-
-# From your PDF table, child age groups are:
-# 6-11 months, 12-23 months, 24-35 months, 36-47 months, 48-59 months
-# That's 5 categories (0-5 is the reference, not included)
-
-# Let me recount properly:
-# Wealth: 4 items
-# Mother Ed: 3 items
-# Child Age: 5 items (6-11, 12-23, 24-35, 36-47, 48-59)
-# Child Sex: 1 item
-# Residence: 1 item
-# Diarrhoea: 1 item
-# Fever: 1 item
-# Electricity: 1 item
-# Media access: 1 item
-# TOTAL = 4+3+5+1+1+1+1+1+1 = 18
-
-# So you need 18 values for each vector, NOT 19!
-
+# ── Data Frame Setup ─────────────────────────────────────────────────────────
 df <- data.frame(
   variable = c(
-    # Wealth Quintile (Ref: Poorest) - 4 items
     "Poor", "Middle", "Upper-middle", "Richest",
-    # Mother's Education (Ref: No education) - 3 items
     "Primary", "Secondary", "Higher",
-    # Child Age Group (Ref: 0-5 months) - 5 items
     "6–11 months", "12–23 months", "24–35 months", "36–47 months", "48–59 months",
-    # Child Sex (Ref: Female) - 1 item
     "Male",
-    # Residence (Ref: Rural) - 1 item
     "Urban",
-    # Clinical symptoms (Ref: No) - 2 items
     "Diarrhoea", "Fever",
-    # Environmental Factors (Ref: No) - 1 item
     "Electricity",
-    # Information Access (Ref: No) - 1 item
     "Media access"
   ),
   
@@ -56,60 +25,50 @@ df <- data.frame(
     rep("Information Access\n(Ref: No)", 1)
   ),
   
-  # AOR values - EXACTLY 18 VALUES
   aOR = c(
-    1.08, 0.93, 0.81, 1.36,  # Wealth (4)
-    1.15, 1.03, 0.83,        # Mother education (3)
-    0.83, 1.08, 0.81, 0.83, 0.90,  # Child age (5)
-    1.01,                     # Male (1)
-    0.91,                     # Urban (1)
-    0.54, 1.83,               # Diarrhoea, Fever (2)
-    1.37,                     # Electricity (1)
-    1.32                      # Media access (1)
+    1.08, 0.93, 0.81, 1.36,
+    1.15, 1.03, 0.83,
+    0.83, 1.08, 0.81, 0.83, 0.90,
+    1.01,
+    0.91,
+    0.54, 1.83,
+    1.37,
+    1.32
   ),
   
-  # Lower CI - EXACTLY 18 VALUES
   lower = c(
-    0.72, 0.61, 0.54, 0.82,   # Wealth (4)
-    0.72, 0.67, 0.51,         # Mother education (3)
-    0.53, 0.70, 0.53, 0.53, 0.53,  # Child age (5)
-    0.79,                     # Male (1)
-    0.65,                     # Urban (1)
-    0.40, 1.35,               # Diarrhoea, Fever (2)
-    0.84,                     # Electricity (1)
-    1.01                      # Media access (1)
+    0.72, 0.61, 0.54, 0.82,
+    0.72, 0.67, 0.51,
+    0.53, 0.70, 0.53, 0.53, 0.53,
+    0.79,
+    0.65,
+    0.40, 1.35,
+    0.84,
+    1.01
   ),
   
-  # Upper CI - EXACTLY 18 VALUES
   upper = c(
-    1.62, 1.43, 1.24, 2.27,   # Wealth (4)
-    1.82, 1.59, 1.36,         # Mother education (3)
-    1.29, 1.67, 1.24, 1.30, 1.52,  # Child age (5)
-    1.28,                     # Male (1)
-    1.28,                     # Urban (1)
-    0.73, 2.48,               # Diarrhoea, Fever (2)
-    2.26,                     # Electricity (1)
-    1.72                      # Media access (1)
+    1.62, 1.43, 1.24, 2.27,
+    1.82, 1.59, 1.36,
+    1.29, 1.67, 1.24, 1.30, 1.52,
+    1.28,
+    1.28,
+    0.73, 2.48,
+    2.26,
+    1.72
   ),
   
-  # P-values - EXACTLY 18 VALUES
   pvalue = c(
-    0.721, 0.752, 0.336, 0.231,  # Wealth (4)
-    0.561, 0.894, 0.468,         # Mother education (3)
-    0.396, 0.717, 0.335, 0.409, 0.687,  # Child age (5)
-    0.967,                       # Male (1)
-    0.590,                       # Urban (1)
-    0.000, 0.000,                # Diarrhoea, Fever (2)
-    0.208,                       # Electricity (1)
-    0.045                        # Media access (1)
+    0.721, 0.752, 0.336, 0.231,
+    0.561, 0.894, 0.468,
+    0.396, 0.717, 0.335, 0.409, 0.687,
+    0.967,
+    0.590,
+    0.000, 0.000,
+    0.208,
+    0.045
   )
 )
-
-# Verify row count
-cat("Total number of rows:", nrow(df), "\n")
-cat("Expected: 18\n")
-cat("Variable count:", length(df$variable), "\n")
-cat("AOR count:", length(df$aOR), "\n")
 
 # ── Derived columns ───────────────────────────────────────────────────────────
 df <- df %>%
@@ -136,22 +95,13 @@ df$group <- factor(df$group, levels = group_order)
 # ── Forest Plot ──────────────────────────────────────────────────────────────
 ggplot(df, aes(x = aOR, y = variable, color = significant)) +
   
-  # Reference line
   geom_vline(xintercept = 1, linetype = "dashed", color = "grey50", linewidth = 0.5) +
-  
-  # Confidence interval lines
   geom_linerange(aes(xmin = lower, xmax = upper), linewidth = 0.7) +
-  
-  # Point estimates
   geom_point(aes(shape = significant), size = 3) +
-  
-  # aOR labels to the right
   geom_text(aes(x = 3.5, label = label), hjust = 0, size = 3, color = "black") +
   
-  # Facet by variable group
   facet_grid(group ~ ., scales = "free_y", space = "free_y", switch = "y") +
   
-  # Color & shape scales
   scale_color_manual(
     values = c("TRUE" = "#c0392b", "FALSE" = "#2c3e50"),
     labels = c("TRUE" = "p < 0.05", "FALSE" = "p \u2265 0.05"),
@@ -163,14 +113,12 @@ ggplot(df, aes(x = aOR, y = variable, color = significant)) +
     name = "Significance"
   ) +
   
-  # x-axis on log scale
   scale_x_log10(
     breaks = c(0.25, 0.5, 1, 2, 4),
     labels = c("0.25", "0.5", "1", "2", "4"),
     limits = c(0.25, 4.5)
   ) +
   
-  # Labels
   labs(
     title = "Factors Associated with Informal Antibiotic Use Among Children Under 5 Years in Bangladesh",
     subtitle = "Adjusted Odds Ratios from Multivariable Logistic Regression",
@@ -179,7 +127,6 @@ ggplot(df, aes(x = aOR, y = variable, color = significant)) +
     caption = "Error bars represent 95% confidence intervals.\nDiamond (red) = statistically significant (p < 0.05).\nAdjusted for wealth, mother's education, child age, sex, residence, diarrhoea, fever, electricity, and media access."
   ) +
   
-  # Theme
   theme_bw(base_size = 10) +
   theme(
     strip.placement = "outside",
@@ -197,10 +144,9 @@ ggplot(df, aes(x = aOR, y = variable, color = significant)) +
     plot.margin = margin(t = 10, r = 10, b = 10, l = 220)
   )
 
-# ── Save ──────────────────────────────────────────────────────────────────────
+# ── Save and Output ──────────────────────────────────────────────────────────
 ggsave("forest_plot.png", width = 12, height = 10, dpi = 300)
 
-# Print verification
 cat("\n--- Group Counts ---\n")
 print(table(df$group))
 cat("\n--- Significant Variables ---\n")
